@@ -1,0 +1,34 @@
+plugins {
+    id 'org.springframework.boot' version '3.1.5'
+    id 'io.spring.dependency-management' version '1.1.3'
+    id 'java'
+    id 'application'
+    id "io.freefair.lombok" version "8.1.0"
+}
+
+group = 'engineering.iterative'
+version = '0.0.1'
+application {
+    mainClass = "engineering.iterative.oumuamua.Application"
+}
+java.sourceCompatibility = JavaVersion.VERSION_17
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.postgresql:postgresql'
+    implementation 'com.zaxxer:HikariCP'
+    implementation 'org.projectlombok:lombok:1.18.30'
+    implementation 'org.liquibase:liquibase-core'
+    annotationProcessor 'org.projectlombok:lombok:1.18.30'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}

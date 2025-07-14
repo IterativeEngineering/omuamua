@@ -1,0 +1,24 @@
+# Application settings
+server:
+  port: 8080
+oumuamua:
+  master:
+    liquibase:
+      change-log: classpath:/db/changelog/master-changelog.xml
+      enabled: true
+    hibernate:
+      generate_statistics: true
+      hbm2ddl:
+        auto: none
+      jdbc:
+        time_zone: UTC
+    datasource:
+      jdbcUrl: jdbc:postgresql://${DB_MASTER_HOST:localhost}:${DB_MASTER_PORT:5432}/${DB_NAME:postgres}
+      username: ${DB_USER:postgres}
+      password: ${DB_PASSWORD:postgres}
+      minimumIdle: 5
+      maximumPoolSize: 5
+      poolName: MasterHikariCP
+      idleTimeout: 120000 #2 minutes
+      maxLifetime: 600000 #10 minutes
+      connectionTimeout: 10000 #10 seconds

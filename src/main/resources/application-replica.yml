@@ -1,0 +1,25 @@
+server:
+  port: 8081
+spring:
+  application:
+    name: oumuamua-backend-replica
+oumuamua:
+  replica:
+    liquibase:
+      enabled: false
+    hibernate:
+      generate_statistics: true
+      hbm2ddl:
+        auto: none
+      jdbc:
+        time_zone: UTC
+    datasource:
+      jdbcUrl: jdbc:postgresql://${DB_MASTER_HOST:localhost}:${DB_MASTER_PORT:5433}/${DB_NAME:postgres}
+      username: ${DB_USER:postgres}
+      password: ${DB_PASSWORD:postgres}
+      minimumIdle: 5
+      maximumPoolSize: 5
+      poolName: MasterHikariCP
+      idleTimeout: 120000 #2 minutes
+      maxLifetime: 600000 #10 minutes
+      connectionTimeout: 10000 #10 seconds

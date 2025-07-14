@@ -1,0 +1,95 @@
+services:
+  # PostgreSQL Master (handles all writes)
+  pg-main:
+    image: postgres:16
+    container_name: pg-main
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=users_db
+    volumes:
+      - pg_main_data:/var/lib/postgresql/data
+      - ./pg_configs/master/postgresql.conf:/etc/postgresql/postgresql.conf
+      - ./pg_configs/master/pg_hba.conf:/etc/postgresql/pg_hba.conf
+      - ./pg_configs/init-master.sh:/docker-entrypoint-initdb.d/init-master.sh
+    command: ["-c", "config_file=/etc/postgresql/postgresql.conf", "-c", "hba_file=/etc/postgresql/pg_hba.conf"]
+    ports:
+      - "5432:5432"
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 2s
+      timeout: 2s
+      retries: 5
+
+  # PostgreSQL Replica (handles reads only)
+  pg-replica:
+    image: postgres:16
+    container_name: pg-replica
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=users_db
+    volumes:
+      - pg_replica_data:/var/lib/postgresql/data
+      - ./pg_configs/replica/postgresql.conf:/etc/postgresql/postgresql.conf
+      - ./pg_configs/replica/pg_hba.conf:/etc/postgresql/pg_hba.conf
+      - ./pg_configs/replica/pg_hba_base.conf:/etc/postgresql/pg_hba_base.conf
+      - ./pg_configs/init-replica.sh:/docker-entrypoint-initdb.d/init-replica.sh
+      - ./pg_configs/replication_monitor_cron.sh:/replication_monitor_cron.sh
+    command: ["-c", "config_file=/etc/postgresql/postgresql.conf", "-c", "hba_file=/etc/postgresql/pg_hba.conf"]
+    ports:
+      - "5433:5432"
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 2s
+      timeout: 2s
+      retries: 5
+    depends_on:
+      - pg-main
+
+  # Backend service - handles database operations
+  backend:
+    build:
+      context: ../backend
+    container_name: backend
+    environment:
+      - DB_MASTER_HOST=pg-main
+      - DB_MASTER_PORT=5432
+      - DB_REPLICA_HOST=pg-replica
+      - DB_REPLICA_PORT=5432
+      - DB_NAME=users_db
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+    ports:
+      - "8080:8080"
+    networks:
+      - app-network
+    depends_on:
+      - pg-main
+      - pg-replica
+
+  # Frontend service - provides the UI
+  frontend:
+    build:
+      context: ../frontend
+    container_name: frontend
+    environment:
+      - BACKEND_URL=http://backend:8080
+    ports:
+      - "3000:80"
+    networks:
+      - app-network
+    depends_on:
+      - backend
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  pg_main_data:
+  pg_replica_data:
